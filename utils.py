@@ -2,13 +2,17 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 
 def load_model_and_tokenizer(
+    model_name,
     use_lade=True
     **kwargs,
     ):
 
     device = 'cuda:1'
 
-    model_name = "meta-llama/Llama-2-7b-chat-hf"
+    if model_name == 'llama':
+        model_name = "meta-llama/Llama-2-7b-chat-hf"
+    else:
+        raise ValueError(f"Invalid Model Name: {model_name}")
     # model_name = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 
     model_kwargs = {

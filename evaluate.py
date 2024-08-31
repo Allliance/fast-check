@@ -1,11 +1,18 @@
 from queryset import QuerySet
 from utils import load_model_and_tokenizer
 
-target_attack = 'fast-check'
-queryset_path = 'data/queries.json'
+attacks = ['AutoDAN', 'GCG', 'PAIR', 'TAP', 'RS']
+defenses = ['Self-Defense'] # Add more defenses here
+model_names = ['llama', 'vicuna']
 
-def evaluate(**kwargs):
-    model, tokenizer = load_model_and_tokenizer(**kwargs)
+def evaluate(model_name=model_names[0],
+             attack=attacks[0],
+             defense=defenses[0],
+             **kwargs):
+    model, tokenizer = load_model_and_tokenizer(
+        model_name=model_name,
+        **kwargs)
+    
     
 
 if __name__ == '__main__':

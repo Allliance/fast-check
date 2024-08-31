@@ -7,6 +7,9 @@ class BaseDefense:
         self.tokenizer = tokenizer
     
     def get_full_response(self, prompt, include_prefix=True):
+        
+        gen_config = self.model.generation_config
+        gen_config.max_new_tokens = 64
         output_ids = self.model.generate(
             self.tokenizer.encode(prompt, return_tensors="pt", max_length=1024).to(self.model.device),
             max_length=1024,
@@ -17,7 +20,7 @@ class BaseDefense:
         if not include_prefix:
             prompt_length = len(self.tokenizer.encode(prompt))
             output_ids = output_ids[prompt_length:]
-        return self.tokenizer.decode(output_ids, skip_special_tokens=True)
+        return self.tokenizer.decode(output_ids, skip_special_tokens=True).strip()
         
     
     def is_jailbreak(self, prompt):
