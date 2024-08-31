@@ -1,9 +1,18 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
+
+from transformers import (
+    AutoModelForCausalLM,
+    LlamaForCausalLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+    HfArgumentParser,
+    TrainingArguments,
+)
 
 def load_model_and_tokenizer(
     model_name,
-    use_lade=True
+    use_lade=True,
+    debug=False,
     **kwargs,
     ):
 
@@ -21,6 +30,18 @@ def load_model_and_tokenizer(
         # 'torch_dtype': torch.float16,
     }
 
+    if debug:
+        attn_implementation = "eager"
+
+        bnb_config = BitsAndBytesConfig(
+            load_in_8bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_use_double_quant=True,
+        )
+        model_kwargs['attn_implementation'] = attn_implementation
+        model_kwargs['quantization_config'] = bnb_config
+
     if use_lade:
         import os, lade
         os.environ['USE_LADE'] = os.environ['LOAD_LADE'] = str(1)
@@ -36,7 +57,9 @@ def load_model_and_tokenizer(
     model = AutoModelForCausalLM.from_pretrained(
         **model_kwargs
     )
-    model.half()
+    
+    if not debug:
+        model.half()
     model.tokenizer = tokenizer
     
     return model, tokenizer

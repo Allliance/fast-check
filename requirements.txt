@@ -3,5 +3,6 @@ accelerate==0.23.0
 fschat==0.2.31
 openai
 anthropic
+bitsandbytes
 einops==0.7.0
 torch<2.1.1
