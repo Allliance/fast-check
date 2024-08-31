@@ -1,7 +1,7 @@
 from queryset import QuerySet
 from utils import load_model_and_tokenizer
 
-
+target_attack = 'fast-check'
 queryset_path = 'data/queries.json'
 
 def evaluate(**kwargs):
