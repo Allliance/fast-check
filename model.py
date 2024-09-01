@@ -11,7 +11,6 @@ def load_model_and_tokenizer(
         model_name,
         debug,
         use_lade,
-        device,
         ):
     
     model_hf_name = MODELS_CONFIG[model_name]['model_name']
@@ -23,6 +22,8 @@ def load_model_and_tokenizer(
     model_kwargs = {
         'pretrained_model_name_or_path': model_hf_name,
         'low_cpu_mem_usage': True,
+        'trust_remote_code': True,
+        'use_cache': True,
     }
 
 
@@ -40,14 +41,11 @@ def load_model_and_tokenizer(
     else:
         model_kwargs.update({
             'device_map': 'auto',
-            'trust_remote_code': True,
-            'use_cache': True,
         })
 
     if use_lade:
         import os, lade
         os.environ['USE_LADE'] = os.environ['LOAD_LADE'] = str(1)
-        torch_device = 'cuda:1'
         
         lade.augment_all()
         #For a 7B model, set LEVEL=5, WINDOW_SIZE=7, GUESS_SET_SIZE=7
@@ -72,7 +70,6 @@ class ChatModel:
         model_name="llama2",
         debug=False,
         use_lade=False,
-        device='cuda:1',
     ):
 
         # Language model
@@ -80,7 +77,6 @@ class ChatModel:
             model_name=model_name,
             debug=debug,
             use_lade=use_lade,
-            device=device
         )
         
         self.tokenizer.padding_side = 'left'
@@ -93,7 +89,9 @@ class ChatModel:
         self.conv_template_name = MODELS_CONFIG[model_name]['conversation_template']
         
 
-    def chat(self, prompts, max_new_tokens=100):
+    def chat(self, prompts, max_new_tokens=1024):
+
+        torch.cuda.empty_cache()
 
         if not isinstance(prompts, list):
             prompts = [prompts]
@@ -115,7 +113,7 @@ class ChatModel:
         return batch_outputs
 
     @torch.no_grad()
-    def __call__(self, batch, max_new_tokens=100):
+    def __call__(self, batch, max_new_tokens=1024):
 
         if not isinstance(batch, list):
             batch = [batch]
@@ -138,7 +136,8 @@ class ChatModel:
                 attention_mask=batch_attention_mask, 
                 max_new_tokens=max_new_tokens
             )
-        except RuntimeError:
+        except RuntimeError as e:
+            raise e
             return []
 
         # Decode the outputs produced by the LLM
