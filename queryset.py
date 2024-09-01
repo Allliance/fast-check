@@ -1,5 +1,6 @@
 from torch.utils.data import Dataset
 import json
+import os
 
 def load_prompts(prompts_json):
     try:
@@ -25,3 +26,16 @@ class QueryDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.queries[idx], self.labels[idx]
+    
+def get_attack_json(model_name, attack_dir):
+    return [x for x in os.listdir(attack_dir) if model_name in x][0]
+    
+def get_query_set_by_attack(model_name="llama2",
+                  attack="GCG",
+                  benign_json=None,):
+    try:
+        jailbreaks_json = get_attack_json(os.path.join(".", 'jailbreaks', attack.upper()))
+    except Exception as e:
+        raise Exception(f"Could not find attack json for {attack} in jailbreaks directory, error: {e}")
+    return QueryDataset(jailbreaks_json, benign_json=benign_json, name=attack + (' & benign' if benign_json else ''))
+    
