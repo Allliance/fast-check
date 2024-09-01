@@ -71,7 +71,7 @@ class ChatModel:
         debug=False,
         use_lade=False,
     ):
-
+        self.name = model_name
         # Language model
         self.model, self.tokenizer = load_model_and_tokenizer(
             model_name=model_name,

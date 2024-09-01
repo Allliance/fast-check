@@ -1,6 +1,7 @@
-from torch.utils.data import Dataset
+# from torch.utils.data import Dataset, DataLoader
 import json
 import os
+import random
 
 def load_prompts(prompts_json):
     try:
@@ -9,17 +10,30 @@ def load_prompts(prompts_json):
         with open(prompts_json, 'r') as f:
             prompts = f.readlines()
         prompts = [json.loads(j.strip()) for j in prompts]
-    jailbreaks = [j['content'] for j in jailbreaks]
+    prompts = [j['content'] for j in prompts]
     return prompts
 
-class QueryDataset(Dataset):
-    def __init__(self, jailbreaks_json, benign_json=None, name='jailbreaks'):
+class QueryDataset:
+    def __init__(self,
+                 jailbreaks_json,
+                 benign_json=None,
+                 name='jailbreaks',
+                 sample=False, **kwargs):
+        self.name = name
         self.queries = load_prompts(jailbreaks_json)
         self.labels = [1] * len(self.queries)
         
         if benign_json:
             self.queries += load_prompts(benign_json)
             self.labels += [0] * (len(self.queries) - len(self.labels))
+
+        if sample:
+            indices = random.sample(range(len(self.queries)), 20)
+            self.queries = [self.queries[i] for i in indices]
+            self.labels = [self.labels[i] for i in indices]
+
+    def __str__(self) -> str:
+        return f"Queryset Name: {self.name}\nTotal Number of queries: {len(self)}\nNumber of jailbreak queries: {sum(self.labels)}\nNumber of benign queries: {len(self) - sum(self.labels)}"
 
     def __len__(self):
         return len(self.queries)
@@ -28,14 +42,18 @@ class QueryDataset(Dataset):
         return self.queries[idx], self.labels[idx]
     
 def get_attack_json(model_name, attack_dir):
-    return [x for x in os.listdir(attack_dir) if model_name in x][0]
+    return os.path.join(attack_dir, [x for x in os.listdir(attack_dir) if model_name in x][0])
     
 def get_query_set_by_attack(model_name="llama2",
                   attack="GCG",
-                  benign_json=None,):
+                  benign_json=None,
+                  batch_size=1,
+                  **kwargs):
     try:
-        jailbreaks_json = get_attack_json(os.path.join(".", 'jailbreaks', attack.upper()))
+        jailbreaks_json = get_attack_json(model_name, os.path.join(".", 'jailbreaks', attack.upper()))
     except Exception as e:
         raise Exception(f"Could not find attack json for {attack} in jailbreaks directory, error: {e}")
-    return QueryDataset(jailbreaks_json, benign_json=benign_json, name=attack + (' & benign' if benign_json else ''))
+    queryset = QueryDataset(jailbreaks_json, benign_json=benign_json, name=attack + (' & benign' if benign_json else ''), **kwargs)
+    
+    return queryset
     
