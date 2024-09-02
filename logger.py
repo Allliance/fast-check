@@ -5,12 +5,19 @@ from fastdef.confidentials import WANDB_API_KEY
 import os
 from pathlib import Path
 
-def get_logger(name, log_dir='logs'):
-    return Logger(name, log_dir)
+def get_logger(name, log_dir='logs', **kwargs):
+    return Logger(name, log_dir, **kwargs)
 
 class Logger:
-    def __init__(self, name=None, log_dir='logs'):
+    def __init__(self,
+                 name=None,
+                 log_dir='logs',
+                 debug=False,):
         wandb.login(anonymous="allow", key=WANDB_API_KEY)
+        if debug:
+            print("Running in DEBUG mode - model is loaded in 4bits")
+        else:
+            print("Running in DEPLOY mode - model is loaded in 16bits")
         
         if name is None:
             name = f"results_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"

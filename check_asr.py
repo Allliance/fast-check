@@ -1,11 +1,12 @@
-from fastdef.evaluation import get_asr
-from fastdef.model import ChatModel
-import argparse
 import os, sys
 
-current = os.path.dirname(os.path.realpath(__file__))
-parent = os.path.dirname(current)
-sys.path.append(parent)
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+from fastdef.evaluation import get_asr
+from fastdef.model import ChatModel
+from fastdef.logger import get_logger
+import argparse
+
 
 attacks = ['AutoDAN', 'GCG', 'PAIR', 'TAP', 'RS']
 
@@ -13,9 +14,11 @@ attacks = ['AutoDAN', 'GCG', 'PAIR', 'TAP', 'RS']
 def main(**kwargs):
     
     model = ChatModel(debug=kwargs['debug'],
-                      model_name=kwargs['model'],
+                      model_name=kwargs['model_name'],
                       use_lade=kwargs['use_lade'],
                       )
+    kwargs.pop('model_name')
+    kwargs.pop('use_lade')
     
     get_asr(model, **kwargs)
 
@@ -25,7 +28,7 @@ if __name__ == '__main__':
     
     # LLM
     parser.add_argument(
-        '--model',
+        '--model_name',
         type=str,
         default='llama2',
         choices=['vicuna', 'llama2']
@@ -67,6 +70,6 @@ if __name__ == '__main__':
         type=bool,
         default=False,
     )
-
-    main(**parser.parse_args())
+    
+    main(**vars(parser.parse_args()))
 

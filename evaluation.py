@@ -15,9 +15,10 @@ def get_asr(model,
             safe_check_method='keyword',
             log=True,
             debug=False,
+            logger=None,
             **kwargs):
-    if log:
-        logger = get_logger(f'ASR-{attack}')
+    if log and logger is None:
+        logger = get_logger(f'ASR-{attack}', debug=debug)
         # print = logger.print
     
     queryset = get_query_set_by_attack(model_name=model.name,
