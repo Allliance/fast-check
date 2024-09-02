@@ -5,12 +5,12 @@ from fastdef.defenses.utils import get_defense
 import torch, gc
 from fastdef.logger import get_logger
 
-attacks = ['AutoDAN', 'GCG', 'PAIR', 'TAP', 'RS']
+ATTACK = ['AutoDAN', 'GCG', 'PAIR', 'TAP', 'RS'][-1]
 defenses = ['Self-Defense'] # Add more defenses here
 model_names = ['llama', 'vicuna']
 
 def get_asr(model,
-            attack='TAP',
+            attack='RS',
             defense=None,
             safe_check_method='keyword',
             log=True,
@@ -50,7 +50,7 @@ def get_asr(model,
             if safe_check_method == 'keyword':
                 jb_checker = JBChecker(method=safe_check_method)
                 jb_results = jb_checker.check(new_conversations)
-                new_results = [{'is_jailbreak': not jailbroken, **r} for jailbroken, r in zip(jb_results, new_results)]
+                new_results = [{'is_jailbreak': jailbroken, **r} for jailbroken, r in zip(jb_results, new_results)]
                 
                 if log:
                     for response, jailbroken in zip(responses, jb_results):
@@ -83,22 +83,8 @@ def get_asr(model,
             results.extend([{'is_jailbreak': i, 'prompt': q, 'label': l} for i, q, l in zip(is_jailbreaks, queries, labels)])
             
     asr = sum([r['is_jailbreak'] for r in results]) / sum(queryset.labels)
-    if log:
-        print("Attack Success Rate: ", asr)
+    
+    logger.log(ASR=asr)
+    
+    print("Attack Success Rate: ", asr)
     return results, asr
-
-    
-    
-
-def evaluate(model_name=model_names[0],
-             attack=attacks[0],
-             defense=defenses[0],
-             **kwargs):
-    model, tokenizer = load_model_and_tokenizer(
-        model_name=model_name,
-        **kwargs)
-    
-
-
-if __name__ == '__main__':
-    evaluate()

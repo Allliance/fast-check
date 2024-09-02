@@ -54,7 +54,6 @@ def get_query_set_by_attack(model_name="llama2",
 
     if jailbreaks_root_dir is None:
         jailbreaks_root_dir = pathlib.Path(__file__).parent.resolve()
-        print(jailbreaks_root_dir)
         
     if not os.path.exists(os.path.join(jailbreaks_root_dir, 'jailbreaks')):
         raise Exception("Could not find jailbreaks directory")

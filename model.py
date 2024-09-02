@@ -84,9 +84,12 @@ class ChatModel:
             self.tokenizer.pad_token = self.tokenizer.unk_token
         if not self.tokenizer.pad_token:
             self.tokenizer.pad_token = self.tokenizer.eos_token
-
-        # Fastchat conversation template
-        self.conv_template_name = MODELS_CONFIG[model_name]['conversation_template']
+        
+        self.conv_template = get_conversation_template(
+            MODELS_CONFIG[model_name]['conversation_template']
+        )
+        if self.conv_template.name == 'llama-2':
+            self.conv_template.sep2 = self.conv_template.sep2.strip()
         
 
     def chat(self, prompts, max_new_tokens=1024):
@@ -99,14 +102,18 @@ class ChatModel:
         full_prompts = []
         
         for prompt in prompts:
-            conv_template = get_conversation_template(self.conv_template_name)
+            self.conv_template.append_message(self.conv_template.roles[0], prompt)
+            self.conv_template.append_message(self.conv_template.roles[1], "")
+            prompt = self.conv_template.get_prompt()
             
-            if conv_template.name == 'llama-2':
-                conv_template.sep2 = conv_template.sep2.strip()
-                
-            conv_template.append_message(conv_template.roles[0], prompt)
-            conv_template.append_message(conv_template.roles[1], None)
-            full_prompts.append(conv_template.get_prompt())
+            encoding = self.model.tokenizer(prompt)
+            full_prompt = self.model.tokenizer.decode(
+                encoding.input_ids
+            ).replace('<s>','').replace('</s>','')
+            
+            full_prompts.append(full_prompt)
+            
+            self.conv_template.messages = []
 
         batch_outputs = self.__call__(full_prompts, max_new_tokens)
 

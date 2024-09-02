@@ -19,7 +19,8 @@ class Logger:
         
         self.run = wandb.init(project='fastdef',
                               name=name,
-                              dir=log_dir,)
+                            #   dir=log_dir,
+                              )
     
     def log(self, **kwargs):
         try:
