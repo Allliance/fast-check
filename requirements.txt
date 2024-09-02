@@ -1,3 +1,4 @@
+wandb
 transformers==4.36.2
 accelerate==0.23.0
 fschat==0.2.31

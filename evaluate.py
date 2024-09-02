@@ -3,6 +3,7 @@ from utils import load_model_and_tokenizer
 from safety_checker import JBChecker
 from defenses.utils import get_defense
 import torch, gc
+from logger import get_logger
 
 attacks = ['AutoDAN', 'GCG', 'PAIR', 'TAP', 'RS']
 defenses = ['Self-Defense'] # Add more defenses here
@@ -15,6 +16,8 @@ def get_asr(model,
             log=True,
             debug=False,
             **kwargs):
+    if log:
+        logger = get_logger('evaluate')
     queryset = get_query_set_by_attack(model_name=model.name,
                                        attack=attack,
                                        sample=debug,
@@ -27,22 +30,24 @@ def get_asr(model,
         
         conversations = []
         for query, label in queryset:
+            
+            print("Step:", len(results) + 1)
             if log:
                 print(f"Prompt: {query}\n")
             queries = [query]
             labels = [label]
             
-            if debug:
+            if safe_check_method == 'keyword':
                 responses = model.chat(queries, max_new_tokens=100)
             else:
                 responses = model.chat(queries)
             
             new_results = [{'prompt': q, 'label': l} for q, l in zip(queries, labels)]
-            conversations.extend([{'response': r, 'prompt': q} for r, q in zip(responses, queries)])
+            new_conversations = [{'response': r, 'prompt': q} for r, q in zip(responses, queries)]
             
             if safe_check_method == 'keyword':
                 jb_checker = JBChecker(method=safe_check_method)
-                jb_results = jb_checker.check(conversations)
+                jb_results = jb_checker.check(new_conversations)
                 new_results = [{'is_jailbreak': not jailbroken, **r} for jailbroken, r in zip(jb_results, new_results)]
                 
                 if log:
@@ -53,6 +58,7 @@ def get_asr(model,
                     print("-" * 50)
 
                     
+            conversations.extend(new_conversations)
             results.extend(new_results)
         
         if safe_check_method == 'model_based':
@@ -74,7 +80,10 @@ def get_asr(model,
             is_jailbreaks = defense.is_jailbreak(queries)
             results.extend([{'is_jailbreak': i, 'prompt': q, 'label': l} for i, q, l in zip(is_jailbreaks, queries, labels)])
             
-    return results, sum([r['is_jailbreak'] for r in results]) / sum(queryset.labels)
+    asr = sum([r['is_jailbreak'] for r in results]) / sum(queryset.labels)
+    if log:
+        print("Attack Success Rate: ", asr)
+    return results, asr
 
     
     
