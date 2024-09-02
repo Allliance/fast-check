@@ -2,6 +2,7 @@
 import json
 import os
 import random
+import pathlib
 
 def load_prompts(prompts_json):
     try:
@@ -47,10 +48,18 @@ def get_attack_json(model_name, attack_dir):
 def get_query_set_by_attack(model_name="llama2",
                   attack="GCG",
                   benign_json=None,
+                  jailbreaks_root_dir=None,
                   batch_size=1,
                   **kwargs):
+
+    if jailbreaks_root_dir is None:
+        jailbreaks_root_dir = pathlib.Path(__file__).parent.resolve()
+        print(jailbreaks_root_dir)
+        
+    if not os.path.exists(os.path.join(jailbreaks_root_dir, 'jailbreaks')):
+        raise Exception("Could not find jailbreaks directory")
     try:
-        jailbreaks_json = get_attack_json(model_name, os.path.join(".", 'jailbreaks', attack.upper()))
+        jailbreaks_json = get_attack_json(model_name, os.path.join(jailbreaks_root_dir, 'jailbreaks', attack.upper()))
     except Exception as e:
         raise Exception(f"Could not find attack json for {attack} in jailbreaks directory, error: {e}")
     queryset = QueryDataset(jailbreaks_json, benign_json=benign_json, name=attack + (' & benign' if benign_json else ''), **kwargs)

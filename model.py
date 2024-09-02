@@ -1,6 +1,6 @@
 import torch
 from fastchat.model import get_conversation_template
-from libs.models_config import MODELS_CONFIG
+from fastdef.libs.models_config import MODELS_CONFIG
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,

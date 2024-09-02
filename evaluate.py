@@ -1,9 +1,9 @@
-from queryset import get_query_set_by_attack
-from utils import load_model_and_tokenizer
-from safety_checker import JBChecker
-from defenses.utils import get_defense
+from fastdef.queryset import get_query_set_by_attack
+from fastdef.utils import load_model_and_tokenizer
+from fastdef.safety_checker import JBChecker
+from fastdef.defenses.utils import get_defense
 import torch, gc
-from logger import get_logger
+from fastdef.logger import get_logger
 
 attacks = ['AutoDAN', 'GCG', 'PAIR', 'TAP', 'RS']
 defenses = ['Self-Defense'] # Add more defenses here
@@ -17,7 +17,9 @@ def get_asr(model,
             debug=False,
             **kwargs):
     if log:
-        logger = get_logger('evaluate')
+        logger = get_logger(f'ASR-{attack}')
+        # print = logger.print
+    
     queryset = get_query_set_by_attack(model_name=model.name,
                                        attack=attack,
                                        sample=debug,
