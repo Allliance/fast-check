@@ -1,3 +1,6 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
 from fastdef.queryset import get_query_set_by_attack
 from fastdef.utils import load_model_and_tokenizer
 from fastdef.safety_checker import JBChecker
@@ -14,11 +17,12 @@ def get_asr(model,
             defense=None,
             safe_check_method='keyword',
             log=True,
+            log_wandb=False,
             debug=False,
             logger=None,
             **kwargs):
-    if log and logger is None:
-        logger = get_logger(f'ASR-{attack}', debug=debug)
+    if log_wandb and logger is None:
+        logger = get_logger(f'{model.name}-ASR-{attack}', debug=debug)
         # print = logger.print
     
     queryset = get_query_set_by_attack(model_name=model.name,
@@ -85,7 +89,8 @@ def get_asr(model,
             
     asr = sum([r['is_jailbreak'] for r in results]) / sum(queryset.labels)
     
-    logger.log(ASR=asr)
+    if logger is not None:
+        logger.log(ASR=asr)
     
     print("Attack Success Rate: ", asr)
     return results, asr

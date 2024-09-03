@@ -12,6 +12,8 @@ def load_model_and_tokenizer(
         debug,
         use_lade,
         ):
+
+    print("Loading Model:", model_name, "...")
     
     model_hf_name = MODELS_CONFIG[model_name]['model_name']
     
@@ -60,6 +62,8 @@ def load_model_and_tokenizer(
         model.half()
         
     model.tokenizer = tokenizer
+    
+    print("Model Loaded Successfully!")
     
     return model, tokenizer
 

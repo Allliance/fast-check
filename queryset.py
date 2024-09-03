@@ -29,7 +29,7 @@ class QueryDataset:
             self.labels += [0] * (len(self.queries) - len(self.labels))
 
         if sample:
-            indices = random.sample(range(len(self.queries)), 20)
+            indices = random.sample(range(len(self.queries)), min(20, len(self.queries)))
             self.queries = [self.queries[i] for i in indices]
             self.labels = [self.labels[i] for i in indices]
 
@@ -42,8 +42,8 @@ class QueryDataset:
     def __getitem__(self, idx):
         return self.queries[idx], self.labels[idx]
     
-def get_attack_json(model_name, attack_dir):
-    return os.path.join(attack_dir, [x for x in os.listdir(attack_dir) if model_name in x][0])
+def get_attack_json(model_name, attack_dir, attack_name):
+    return os.path.join(attack_dir, [x for x in os.listdir(attack_dir) if model_name in x and x.startswith(attack_name.lower())][0])
     
 def get_query_set_by_attack(model_name="llama2",
                   attack="GCG",
@@ -58,7 +58,7 @@ def get_query_set_by_attack(model_name="llama2",
     if not os.path.exists(os.path.join(jailbreaks_root_dir, 'jailbreaks')):
         raise Exception("Could not find jailbreaks directory")
     try:
-        jailbreaks_json = get_attack_json(model_name, os.path.join(jailbreaks_root_dir, 'jailbreaks', attack.upper()))
+        jailbreaks_json = get_attack_json(model_name, os.path.join(jailbreaks_root_dir, 'jailbreaks', attack.upper()), attack)
     except Exception as e:
         raise Exception(f"Could not find attack json for {attack} in jailbreaks directory, error: {e}")
     queryset = QueryDataset(jailbreaks_json, benign_json=benign_json, name=attack + (' & benign' if benign_json else ''), **kwargs)
