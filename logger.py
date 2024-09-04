@@ -15,7 +15,7 @@ class Logger:
                  debug=False,
                  **kwargs):
         wandb.login(anonymous="allow",
-                    key=WANDB_API_KEY, **kwargs)
+                    key=WANDB_API_KEY)
         if debug:
             print("Running in DEBUG mode - model is loaded in 4bits")
         else:
@@ -29,6 +29,7 @@ class Logger:
         self.run = wandb.init(project='fastdef',
                               name=name,
                             #   dir=log_dir,
+                              **kwargs,
                               )
     
     def log(self, **kwargs):
