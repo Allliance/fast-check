@@ -22,7 +22,17 @@ def get_asr(model,
             logger=None,
             **kwargs):
     if log_wandb and logger is None:
-        logger = get_logger(f'{model.name}-ASR-{attack}' + ("DEBUG" if debug else ""), debug=debug)
+        logger = get_logger(f'{model.name}-ASR-{attack}' + ("DEBUG" if debug else ""),
+                            debug=debug,
+                            config={
+                                'run goal': "Checking vanilla asr of the given jailbreaks",
+                                'model': model.name,
+                                'attack': attack,
+                                'defense': defense,
+                                'safety_check_method': safe_check_method,
+                                'log': log,
+                                }
+                            )
         # print = logger.print
     
     queryset = get_query_set_by_attack(model_name=model.name,
