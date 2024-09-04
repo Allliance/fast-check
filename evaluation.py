@@ -1,5 +1,5 @@
-import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+# import os
+# os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 from fastdef.queryset import get_query_set_by_attack
 from fastdef.utils import load_model_and_tokenizer
@@ -24,8 +24,8 @@ def get_asr(model,
     if log_wandb and logger is None:
         logger = get_logger(f'{model.name}-ASR-{attack}' + ("DEBUG" if debug else ""),
                             debug=debug,
+                            notes='Checking vanilla asr of the given jailbreaks' + (f' with {defense}' if defense is not None else '') + f'on {model.name} model under {attack} attack',
                             config={
-                                'run goal': "Checking vanilla asr of the given jailbreaks",
                                 'model': model.name,
                                 'attack': attack,
                                 'defense': defense,
