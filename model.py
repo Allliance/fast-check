@@ -1,6 +1,7 @@
+import os
 import torch
 from fastchat.model import get_conversation_template
-from fastdef.libs.models_config import MODELS_CONFIG
+from fastdef.models_config import MODELS_CONFIG
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -51,7 +52,7 @@ def load_model_and_tokenizer(
         })
 
     if use_lade:
-        import os, lade
+        from fastdef.libs import lade
         os.environ['USE_LADE'] = os.environ['LOAD_LADE'] = str(1)
         
         lade.augment_all()
@@ -131,7 +132,11 @@ class ChatModel:
         return batch_outputs
 
     @torch.no_grad()
-    def __call__(self, batch, max_new_tokens=1024):
+    def __call__(self,
+                 batch,
+                 max_new_tokens=1024,
+                 return_whole_dict=False,
+                 **kwargs):
 
         if not isinstance(batch, list):
             batch = [batch]
@@ -152,8 +157,11 @@ class ChatModel:
             outputs = self.model.generate(
                 batch_input_ids, 
                 attention_mask=batch_attention_mask, 
-                max_new_tokens=max_new_tokens
+                max_new_tokens=max_new_tokens,
+                **kwargs
             )
+            if return_whole_dict:
+                return outputs
         except RuntimeError as e:
             raise e
             return []

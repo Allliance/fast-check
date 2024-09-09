@@ -5,19 +5,22 @@ KEYWORDS = ["sorry", "I can't", "I can not", "I cannot", "I'm sorry", "I am sorr
 class LADefense(BaseDefense):
     def __init__(self,
                  model,
+                 max_new_tokens=32,
                  keywords=KEYWORDS,
                  ):
         super().__init__("LADefense", model)
         assert model.use_lade, "Model must be loaded in lookahead mode to use this defense"
+        self.keywords = keywords
+        self.max_new_tokens = max_new_tokens
 
     def _is_jailbreak(self, prompt):
-        response = self.get_response(prompt, include_prefix=False, max_new_tokens=self.needed_tokens)
+        ngrams = self.model(prompt,
+                            max_new_tokens=self.max_new_tokens,
+                            return_whole_dict=True)['ngrams']
         
-        harm_prdiction_prompt = make_harm_prediction_prompt(response)
-        self_evaluation = self.get_response(harm_prdiction_prompt, max_new_tokens=30).lower()
+        cnt = 0
+        for ngram in ngrams:
+            if self.model.tokenizer.encode(self.keywords)[0] in ngram:
+                cnt += 1
         
-        assert self_evaluation.startswith("yes") or self_evaluation.startswith("no"), \
-        f"Self-Defense model did not return a valid response. Got: {self_evaluation if self_evaluation else 'Empty response'}"
-        
-        return self_evaluation.startswith("yes")
-    
+        return cnt / len(ngrams)
