@@ -1,9 +1,7 @@
 
-def get_defense(name, model, **kwargs):
+def get_defense(name, llm, **kwargs):
     if name.lower() == "self-defense":
         from .self_defense import SelfDefense
-        model = model.model
-        tokenizer = model.tokenizer
-        return SelfDefense(model, tokenizer)
+        return SelfDefense(llm)
     else:
         raise ValueError(f"Defense {name} not found")

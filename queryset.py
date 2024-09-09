@@ -3,6 +3,7 @@ import json
 import os
 import random
 import pathlib
+from copy import deepcopy
 
 def load_prompts(prompts_json):
     try:
@@ -39,7 +40,19 @@ class QueryDataset:
     def __len__(self):
         return len(self.queries)
 
+    def subset(self, indices):
+        instance = deepcopy(self)
+        instance.queries = [instance.queries[i] for i in indices]
+        instance.labels = [instance.labels[i] for i in indices]
+        
+        return instance
+
     def __getitem__(self, idx):
+        if isinstance(idx, slice):
+            return [self[i] for i in range(*idx.indices(len(self)))]
+        if isinstance(idx, list):
+            return [self[i] for i in idx]
+        
         return self.queries[idx], self.labels[idx]
     
 def get_attack_json(model_name, attack_dir, attack_name):

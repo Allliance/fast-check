@@ -2,7 +2,7 @@ import os, sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
-from fastdef.evaluation import get_asr
+from fastdef.evaluation import get_vanilla_asr
 from fastdef.model import ChatModel
 from fastdef.logger import get_logger
 import argparse
@@ -20,7 +20,7 @@ def main(**kwargs):
     kwargs.pop('model_name')
     kwargs.pop('use_lade')
     
-    get_asr(model, **kwargs)
+    get_vanilla_asr(model, **kwargs)
 
 
 if __name__ == '__main__':
