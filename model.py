@@ -7,6 +7,11 @@ from transformers import (
     BitsAndBytesConfig,
 )
 
+# LADE parameters
+LADE_LEVEL = 5
+LADE_WINDOW_SIZE=7
+LADE_GUESS_SET_SIZE=7
+
 def load_model_and_tokenizer(
         model_name,
         debug,
@@ -51,7 +56,7 @@ def load_model_and_tokenizer(
         
         lade.augment_all()
         #For a 7B model, set LEVEL=5, WINDOW_SIZE=7, GUESS_SET_SIZE=7
-        lade.config_lade(LEVEL=5, WINDOW_SIZE=7, GUESS_SET_SIZE=7, DEBUG=1 ,POOL_FROM_PROMPT=True)
+        lade.config_lade(LEVEL=LADE_LEVEL, WINDOW_SIZE=LADE_WINDOW_SIZE, GUESS_SET_SIZE=LADE_GUESS_SET_SIZE, DEBUG=0 ,POOL_FROM_PROMPT=True)
         # model_kwargs['attn_implementation'] = "flash_attention_2"
 
     model = AutoModelForCausalLM.from_pretrained(

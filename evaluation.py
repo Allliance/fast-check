@@ -7,6 +7,7 @@ from fastdef.safety_checker import JBChecker
 from fastdef.defenses.utils import get_defense
 import torch, gc
 from fastdef.logger import get_logger
+import time
 
 ATTACK = ['AutoDAN', 'GCG', 'PAIR', 'TAP', 'RS'][-1]
 defenses = ['Self-Defense', 'fastdef'] # Add more defenses here
@@ -113,8 +114,9 @@ def eval_defense(model,
                 debug=False,
                 logger=None,
                 **kwargs):
+    
     if log_wandb and logger is None:
-        logger = get_logger(f'{model.name} {attack} X {defense}' + ("DEBUG" if debug else ""),
+        logger = get_logger(f'{"(DEBUG)" if debug else ""}{model.name} {attack} X {defense}' + ("DEBUG" if debug else ""),
                             debug=debug,
                             notes='Evaluating the defense' + f'{defense} on {model.name} model under {attack} attack',
                             config={
@@ -125,6 +127,8 @@ def eval_defense(model,
                                 'log': log,
                                 }
                             )
+    
+    print("Evaluating the defense", defense, "on", model.name, "model under", attack, "attack")
     
     queryset = get_query_set_by_attack(model_name=model.name,
                                        attack=attack,
@@ -138,15 +142,23 @@ def eval_defense(model,
     
     defense = get_defense(defense, model, **kwargs)
     
+    total_time = 0
+    
     for query, label in queryset:
         queries = [query]
         labels = [label]
         print("Working on a batch of size:", len(queries))
         
+        begin_time = time.time()
         is_jailbreaks = defense.is_jailbreak(queries)
+        end_time = time.time()
         results.extend([{'is_jailbreak': i, 'prompt': q, 'label': l} for i, q, l in zip(is_jailbreaks, queries, labels)])
         
         print("A batch finished")
+        print("Total Time taken for this batch:", end_time - begin_time)
+        
+        total_time += end_time - begin_time
+        
         for query, label, is_jailbreak in zip(queries, labels, is_jailbreaks):
             print("Prompt:", query)
             if label and is_jailbreak:
@@ -160,11 +172,18 @@ def eval_defense(model,
             print("-" * 50)
             print("-" * 50)
     
-    metrics = {}
+    
+    metrics = {
+        "Average Time per Query": total_time / len(queryset),
+    }
     if sum(queryset.labels) > 0:
-        metrics['TPR (ASR)'] = sum([r['is_jailbreak'] for r in results]) / sum(queryset.labels)
+        metrics['TPR'] = sum([r['is_jailbreak'] for r in results]) / sum(queryset.labels)
+        metrics['ASR (TNR)'] = 1 - metrics['TPR']
+        logger.log(ASR=metrics['ASR (TNR)'], TPR=metrics['TPR'])
+        
     if sum(queryset.labels) < len(queryset):
         metrics['FPR'] = sum([r['is_jailbreak'] for r in results]) / (len(queryset) - sum(queryset.labels))
+        logger.log(FPR=metrics['FPR'])
 
     for k, v in metrics.items():
         print(k, ":", v)
