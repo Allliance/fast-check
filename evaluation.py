@@ -9,7 +9,7 @@ import torch, gc
 from fastdef.logger import get_logger
 
 ATTACK = ['AutoDAN', 'GCG', 'PAIR', 'TAP', 'RS'][-1]
-defenses = ['Self-Defense'] # Add more defenses here
+defenses = ['Self-Defense', 'fastdef'] # Add more defenses here
 model_names = ['llama', 'vicuna']
 
 def get_asr(model,
@@ -24,11 +24,11 @@ def get_asr(model,
     if log_wandb and logger is None:
         logger = get_logger(f'{model.name}-ASR-{attack}' + ("DEBUG" if debug else ""),
                             debug=debug,
-                            notes='Checking vanilla asr of the given jailbreaks' + (f' with {defense}' if defense is not None else '') + f'on {model.name} model under {attack} attack',
+                            notes='Checking vanilla asr of the given jailbreaks' + (f' with {str(defense)}' if defense is not None else '') + f'on {model.name} model under {attack} attack',
                             config={
                                 'model': model.name,
                                 'attack': attack,
-                                'defense': defense,
+                                'defense': str(defense),
                                 'safety_check_method': safe_check_method,
                                 'log': log,
                                 }

@@ -1,27 +1,27 @@
 
 
 class BaseDefense:
-    def __init__(self, name, model, tokenizer):
+    def __init__(self, name, model):
         self.name = name
         self.model = model
-        self.tokenizer = tokenizer
     
-    def get_full_response(self, prompt, include_prefix=True):
+    def get_response(self, prompt, include_prefix=True, max_new_tokens=1024):
+        output_ids = self.model.tokenizer.encode(self.model.chat(prompt, max_new_tokens))
         
-        gen_config = self.model.generation_config
-        gen_config.max_new_tokens = 64
-        output_ids = self.model.generate(
-            self.tokenizer.encode(prompt, return_tensors="pt", max_length=1024).to(self.model.device),
-            max_length=1024,
-            top_p=0.9,
-            do_sample=True,
-            temperature=0.7
-        )[0]
         if not include_prefix:
             prompt_length = len(self.tokenizer.encode(prompt))
             output_ids = output_ids[prompt_length:]
-        return self.tokenizer.decode(output_ids, skip_special_tokens=True).strip()
-        
+            
+        return self.tokenizer.decode(output_ids, skip_special_tokens=True).strip()  
+
+    def __str__(self) -> str:
+        return self.name
     
-    def is_jailbreak(self, prompt):
-        raise NotImplementedError
+    
+    def is_jailbreak(self, prompts):
+        if not isinstance(prompts, list):
+            prompts = [prompts]
+        assert all([isinstance(p, str) for p in prompts]), "Prompts must be a list of strings"
+        
+        return [self._is_jailbreak(p) for p in prompts]
+        
