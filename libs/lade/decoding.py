@@ -262,6 +262,11 @@ def jacobi_sample_multilevel(
     >>> tokenizer.batch_decode(outputs, skip_special_tokens=True)
     ['Today is a beautiful day, and we must do everything possible to make it a day of celebration.']
     ```"""
+    
+    return_ngrams = return_dict_in_generate
+    
+    return_dict_in_generate = False
+    
     # init values
     logits_processor = logits_processor if logits_processor is not None else LogitsProcessorList()
     stopping_criteria = stopping_criteria if stopping_criteria is not None else StoppingCriteriaList()
@@ -408,7 +413,7 @@ def jacobi_sample_multilevel(
             guess_tokens = None
 
         #not support logits_processor yet
-        assert return_dict_in_generate == False
+        assert return_dict_in_generate == False, str(return_dict_in_generate)
         assert len(logits_processor) == 0
 
         # forward pass to get next token
@@ -668,34 +673,36 @@ def jacobi_sample_multilevel(
     if streamer is not None:
         streamer.end()
 
-    all_ngrams = []
-    for hgram, grams in token_map.items():
-        for gram in grams:
-            all_ngrams.append([hgram] + gram)
-
-    if return_dict_in_generate:
-        if self.config.is_encoder_decoder:
-            return SampleEncoderDecoderOutput(
-                sequences=input_ids,
-                scores=scores,
-                encoder_attentions=encoder_attentions,
-                encoder_hidden_states=encoder_hidden_states,
-                decoder_attentions=decoder_attentions,
-                cross_attentions=cross_attentions,
-                decoder_hidden_states=decoder_hidden_states,
-                past_key_values=model_kwargs.get("past_key_values"),
-            )
-        else:
-            return SampleDecoderOnlyOutput(
-                sequences=input_ids,
-                scores=scores,
-                attentions=decoder_attentions,
-                hidden_states=decoder_hidden_states,
-                ngrams=all_ngrams,
-                past_key_values=model_kwargs.get("past_key_values"),
-            )
-    else:
-        return input_ids
+    # if return_dict_in_generate:
+    #     if self.config.is_encoder_decoder:
+    #         return SampleEncoderDecoderOutput(
+    #             sequences=input_ids,
+    #             scores=scores,
+    #             encoder_attentions=encoder_attentions,
+    #             encoder_hidden_states=encoder_hidden_states,
+    #             decoder_attentions=decoder_attentions,
+    #             cross_attentions=cross_attentions,
+    #             decoder_hidden_states=decoder_hidden_states,
+    #             past_key_values=model_kwargs.get("past_key_values"),
+    #         )
+    #     else:
+    #         return SampleDecoderOnlyOutput(
+    #             sequences=input_ids,
+    #             scores=scores,
+    #             attentions=decoder_attentions,
+    #             hidden_states=decoder_hidden_states,
+    #             past_key_values=model_kwargs.get("past_key_values"),
+    #         )
+    # else:
+    if return_ngrams:
+        
+        all_ngrams = []
+        for hgram, grams in token_map.items():
+            for gram in grams:
+                all_ngrams.append([hgram] + list(gram))
+        return input_ids, all_ngrams
+    
+    return input_ids
 
 
 

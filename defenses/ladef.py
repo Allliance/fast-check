@@ -16,7 +16,7 @@ class LADefense(BaseDefense):
     def _is_jailbreak(self, prompt):
         ngrams = self.model(prompt,
                             max_new_tokens=self.max_new_tokens,
-                            return_whole_dict=True)['ngrams']
+                            return_whole_dict=True).ngrams
         
         cnt = 0
         for ngram in ngrams:

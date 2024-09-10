@@ -140,7 +140,7 @@ class ChatModel:
     def __call__(self,
                  batch,
                  max_new_tokens=1024,
-                 return_whole_dict=False,
+                 return_ngrams=False,
                  **kwargs):
 
         if not isinstance(batch, list):
@@ -163,10 +163,13 @@ class ChatModel:
                 batch_input_ids, 
                 attention_mask=batch_attention_mask, 
                 max_new_tokens=max_new_tokens,
-                return_dict_in_generate=return_whole_dict,
+                return_dict_in_generate=return_ngrams,
+                top_p=0.9,
+                do_sample=True,
+                temperature=0.7,
                 **kwargs
             )
-            if return_whole_dict:
+            if return_ngrams:
                 return outputs
         except RuntimeError as e:
             raise e
