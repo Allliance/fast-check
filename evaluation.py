@@ -177,7 +177,8 @@ def eval_defense(model,
     metrics = {
         "Average Time per Query": total_time / len(queryset),
     }
-    if isinstance(results[0]['label'], bool):
+    random_label = results[0]['label']
+    if float(random_label) == int(random_label):
         if sum(queryset.labels) > 0:
             metrics['TPR'] = sum([r['is_jailbreak'] for r in results]) / sum(queryset.labels)
             metrics['ASR (TNR)'] = 1 - metrics['TPR']

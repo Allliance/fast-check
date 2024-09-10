@@ -668,6 +668,11 @@ def jacobi_sample_multilevel(
     if streamer is not None:
         streamer.end()
 
+    all_ngrams = []
+    for hgram, grams in token_map.items():
+        for gram in grams:
+            all_ngrams.append([hgram] + gram)
+
     if return_dict_in_generate:
         if self.config.is_encoder_decoder:
             return SampleEncoderDecoderOutput(
@@ -686,6 +691,7 @@ def jacobi_sample_multilevel(
                 scores=scores,
                 attentions=decoder_attentions,
                 hidden_states=decoder_hidden_states,
+                ngrams=all_ngrams,
                 past_key_values=model_kwargs.get("past_key_values"),
             )
     else:

@@ -91,6 +91,11 @@ class ChatModel:
             use_lade=use_lade,
         )
         
+        if debug:
+            print("Running in DEBUG mode - model is loaded in 4bits")
+        else:
+            print("Running in DEPLOY mode - model is loaded in 16bits")
+            
         self.tokenizer.padding_side = 'left'
         if model_name == 'llama2':
             self.tokenizer.pad_token = self.tokenizer.unk_token
@@ -158,6 +163,7 @@ class ChatModel:
                 batch_input_ids, 
                 attention_mask=batch_attention_mask, 
                 max_new_tokens=max_new_tokens,
+                return_dict_in_generate=return_whole_dict,
                 **kwargs
             )
             if return_whole_dict:

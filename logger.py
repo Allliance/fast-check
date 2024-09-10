@@ -16,10 +16,6 @@ class Logger:
                  **kwargs):
         wandb.login(anonymous="allow",
                     key=WANDB_API_KEY)
-        if debug:
-            print("Running in DEBUG mode - model is loaded in 4bits")
-        else:
-            print("Running in DEPLOY mode - model is loaded in 16bits")
         
         if name is None:
             name = f"results_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
