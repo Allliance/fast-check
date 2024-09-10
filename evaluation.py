@@ -30,6 +30,7 @@ def get_vanilla_asr(model,
                             config={
                                 'model': model.name,
                                 'attack': attack,
+                                'debug': debug,
                                 'safety_check_method': safe_check_method,
                                 'log': log,
                                 }
@@ -124,6 +125,7 @@ def eval_defense(model,
                                 'model': model.name,
                                 'attack': attack,
                                 'defense': defense,
+                                'debug': debug,
                                 'benign_json': benign_json_path,
                                 'log': log,
                                 }
