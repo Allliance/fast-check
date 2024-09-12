@@ -143,7 +143,7 @@ def eval_defense(model,
     print("#" * 50)
     results = []
     
-    defense = get_defense(defense, model, **kwargs)
+    defense = get_defense(defense, model, log=log, **kwargs)
     
     total_time = 0
     
