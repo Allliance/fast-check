@@ -41,7 +41,15 @@ if __name__ == '__main__':
     parser.add_argument(
         '--attack',
         type=str,
-        default='GCG',
+        default=None,
+        choices=attacks
+    )
+    
+    # Include Benign
+    parser.add_argument(
+        '--include_benign',
+        type=str,
+        default=None,
         choices=attacks
     )
     

@@ -5,28 +5,32 @@ import random
 import pathlib
 from copy import deepcopy
 
+BENIGN_JSON = 'assets/benign_prompts.json'
+
 def load_prompts(prompts_json):
     try:
         prompts = json.load(open(prompts_json, 'r'))
     except Exception as _:
         with open(prompts_json, 'r') as f:
             prompts = f.readlines()
-        prompts = [json.loads(j.strip()) for j in prompts]
-    prompts = [j['content'] for j in prompts]
+        prompts = [json.loads(p.strip()) for p in prompts]
+    prompts = [p['content'] for p in prompts]
     return prompts
 
 class QueryDataset:
     def __init__(self,
-                 jailbreaks_json,
-                 benign_json=None,
+                 jailbreaks_json=None,
+                 include_benign=False,
                  name='jailbreaks',
                  sample=False, **kwargs):
+        assert include_benign or jailbreaks_json is not None
+        
         self.name = name
         self.queries = load_prompts(jailbreaks_json)
         self.labels = [1] * len(self.queries)
         
-        if benign_json:
-            self.queries += load_prompts(benign_json)
+        if include_benign:
+            self.queries += load_prompts(BENIGN_JSON)
             self.labels += [0] * (len(self.queries) - len(self.labels))
 
         if sample:
@@ -59,14 +63,15 @@ def get_attack_json(model_name, attack_dir, attack_name):
     return os.path.join(attack_dir, [x for x in os.listdir(attack_dir) if model_name in x and x.startswith(attack_name.lower())][0])
     
 def get_query_set_by_attack(model_name="llama2",
-                  attack="GCG",
-                  benign_json=None,
+                  attack=None,
+                  include_benign=False,
                   jailbreaks_root_dir=None,
                   batch_size=1,
                   **kwargs):
 
     if jailbreaks_root_dir is None:
         jailbreaks_root_dir = pathlib.Path(__file__).parent.resolve()
+        jailbreaks_root_dir = os.path.join(jailbreaks_root_dir, 'assets')
         
     if not os.path.exists(os.path.join(jailbreaks_root_dir, 'jailbreaks')):
         raise Exception("Could not find jailbreaks directory")
@@ -74,7 +79,10 @@ def get_query_set_by_attack(model_name="llama2",
         jailbreaks_json = get_attack_json(model_name, os.path.join(jailbreaks_root_dir, 'jailbreaks', attack.upper()), attack)
     except Exception as e:
         raise Exception(f"Could not find attack json for {attack} in jailbreaks directory, error: {e}")
-    queryset = QueryDataset(jailbreaks_json, benign_json=benign_json, name=attack + (' & benign' if benign_json else ''), **kwargs)
+    queryset = QueryDataset(jailbreaks_json,
+                            include_benign=include_benign,
+                            name=attack + (' & benign' if include_benign else ''),
+                            **kwargs)
     
     return queryset
     
