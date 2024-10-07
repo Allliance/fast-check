@@ -1,13 +1,10 @@
 import os, sys
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
 from fastdef.evaluation import eval_defense
 from fastdef.model import ChatModel
 import argparse
 import torch
-
-print(torch.cuda.device_count())
 
 attacks = ['AutoDAN', 'GCG', 'PAIR', 'TAP', 'RS']
 defenses = ['self-defense', 'ladef'] # Add more defenses here
