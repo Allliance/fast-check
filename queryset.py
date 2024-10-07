@@ -24,6 +24,8 @@ class QueryDataset:
                  benigns_json_file=None,
                  name='',
                  sample=False,
+                 balanced=True,
+                 random_seed=42,
                  **kwargs):
         assert benigns_json_file is not None or jailbreaks_json_file is not None
         
@@ -32,10 +34,23 @@ class QueryDataset:
         self.labels = [1] * len(self.queries)
         
         if benigns_json_file is not None:
-            self.queries += load_prompts(benigns_json_file)
-            self.labels += [0] * (len(self.queries) - len(self.labels))
+            new_queries = load_prompts(benigns_json_file)
+            self.queries += new_queries
+            self.labels += [0] * len(new_queries)
+
+        if balanced:
+            if random_seed:
+                random.seed(random_seed)
+            min_len = min(len(self.queries), sum(self.labels))
+            jailbreak_indices = random.sample([i for i, l in enumerate(self.labels) if l == 1], min_len)
+            benign_indices = random.sample([i for i, l in enumerate(self.labels) if l == 0], min_len)
+            
+            self.queries = [self.queries[i] for i in jailbreak_indices] + [self.queries[i] for i in benign_indices]
+            self.labels = [1] * min_len + [0] * min_len
 
         if sample:
+            if random_seed:
+                random.seed(random_seed)
             indices = random.sample(range(len(self.queries)), min(20, len(self.queries)))
             self.queries = [self.queries[i] for i in indices]
             self.labels = [self.labels[i] for i in indices]
@@ -85,9 +100,10 @@ def get_query_set_by_attack(model_name="llama2",
     except Exception as e:
         raise Exception(f"Could not load json file for {attack}, error: {e}")
     
-    benigns_json_file = os.path.join(assets_root_dir, 'benign_prompts.json')
-    if not os.path.exists(benigns_json_file):
-        raise Exception("Could not find benign prompts json file")
+    if include_benign:
+        benigns_json_file = os.path.join(assets_root_dir, 'benign_prompts.json')
+        if not os.path.exists(benigns_json_file):
+            raise Exception("Could not find benign prompts json file")
     
     
     queryset = QueryDataset(jailbreaks_json_file,
