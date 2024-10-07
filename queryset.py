@@ -5,7 +5,8 @@ import random
 import pathlib
 from copy import deepcopy
 
-BENIGN_JSON = 'assets/benign_prompts.json'
+DEFAULT_ASSETS_DIR = os.path.join(pathlib.Path(__file__).parent.resolve(), 'assets')
+DEFAULT_BENIGN_JSON = os.path.join(DEFAULT_ASSETS_DIR, 'benign_prompts.json')
 
 def load_prompts(prompts_json):
     try:
@@ -19,18 +20,19 @@ def load_prompts(prompts_json):
 
 class QueryDataset:
     def __init__(self,
-                 jailbreaks_json=None,
-                 include_benign=False,
-                 name='jailbreaks',
-                 sample=False, **kwargs):
-        assert include_benign or jailbreaks_json is not None
+                 jailbreaks_json_file=None,
+                 benigns_json_file=None,
+                 name='',
+                 sample=False,
+                 **kwargs):
+        assert benigns_json_file is not None or jailbreaks_json_file is not None
         
         self.name = name
-        self.queries = load_prompts(jailbreaks_json)
+        self.queries = load_prompts(jailbreaks_json_file)
         self.labels = [1] * len(self.queries)
         
-        if include_benign:
-            self.queries += load_prompts(BENIGN_JSON)
+        if benigns_json_file is not None:
+            self.queries += load_prompts(benigns_json_file)
             self.labels += [0] * (len(self.queries) - len(self.labels))
 
         if sample:
@@ -59,28 +61,37 @@ class QueryDataset:
         
         return self.queries[idx], self.labels[idx]
     
-def get_attack_json(model_name, attack_dir, attack_name):
+def get_json_file(model_name, attack_dir, attack_name):
     return os.path.join(attack_dir, [x for x in os.listdir(attack_dir) if model_name in x and x.startswith(attack_name.lower())][0])
     
 def get_query_set_by_attack(model_name="llama2",
                   attack=None,
                   include_benign=False,
-                  jailbreaks_root_dir=None,
+                  assets_root_dir=None,
                   batch_size=1,
                   **kwargs):
-
-    if jailbreaks_root_dir is None:
-        jailbreaks_root_dir = pathlib.Path(__file__).parent.resolve()
-        jailbreaks_root_dir = os.path.join(jailbreaks_root_dir, 'assets')
-        
-    if not os.path.exists(os.path.join(jailbreaks_root_dir, 'jailbreaks')):
+    
+    if assets_root_dir is None:
+        assets_root_dir = DEFAULT_ASSETS_DIR
+    
+    if not os.path.exists(os.path.join(assets_root_dir, 'jailbreaks')):
         raise Exception("Could not find jailbreaks directory")
+    
+    jailbreaks_json_file = None
+    benigns_json_file = None
+    
     try:
-        jailbreaks_json = get_attack_json(model_name, os.path.join(jailbreaks_root_dir, 'jailbreaks', attack.upper()), attack)
+        jailbreaks_json_file = get_json_file(model_name, os.path.join(assets_root_dir, 'jailbreaks', attack.upper()), attack)
     except Exception as e:
-        raise Exception(f"Could not find attack json for {attack} in jailbreaks directory, error: {e}")
-    queryset = QueryDataset(jailbreaks_json,
-                            include_benign=include_benign,
+        raise Exception(f"Could not load json file for {attack}, error: {e}")
+    
+    benigns_json_file = os.path.join(assets_root_dir, 'benign_prompts.json')
+    if not os.path.exists(benigns_json_file):
+        raise Exception("Could not find benign prompts json file")
+    
+    
+    queryset = QueryDataset(jailbreaks_json_file,
+                            benigns_json_file,
                             name=attack + (' & benign' if include_benign else ''),
                             **kwargs)
     

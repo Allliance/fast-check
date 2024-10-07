@@ -110,7 +110,7 @@ def get_vanilla_asr(model,
 def eval_defense(model,
                 attack='RS',
                 defense='Self-Defense',
-                benign_json_path=None,
+                include_benign=False,
                 log=True,
                 log_wandb=True,
                 debug=False,
@@ -126,7 +126,7 @@ def eval_defense(model,
                                 'attack': attack,
                                 'defense': defense,
                                 'debug': debug,
-                                'benign_json': benign_json_path,
+                                'include_benign': include_benign,
                                 'log': log,
                                 }
                             )
@@ -136,7 +136,7 @@ def eval_defense(model,
     queryset = get_query_set_by_attack(model_name=model.name,
                                        attack=attack,
                                        sample=debug,
-                                       benign_json=benign_json_path,
+                                       include_benign=include_benign,
                                        **kwargs)
     
     print(queryset)

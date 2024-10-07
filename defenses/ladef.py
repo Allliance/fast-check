@@ -1,4 +1,5 @@
 from .base import BaseDefense
+import numpy as np
 
 KEYWORDS = ["sorry", "I can't", "I can not", "I cannot", "I'm sorry", "I am sorry", "I can't do that", "I can not do that", "I cannot do that"]
 
@@ -7,6 +8,7 @@ class LADefense(BaseDefense):
                  model,
                  max_new_tokens=32,
                  keywords=KEYWORDS,
+                 **kwargs,
                  ):
         super().__init__("LADefense", model)
         assert model.use_lade, "Model must be loaded in lookahead mode to use this defense"
@@ -14,6 +16,9 @@ class LADefense(BaseDefense):
         self.max_new_tokens = max_new_tokens
 
     def _is_jailbreak(self, prompt):
+        
+        return np.random.rand() < 0.5
+        
         ngrams = self.model(prompt,
                             max_new_tokens=self.max_new_tokens,
                             return_whole_dict=True).ngrams
