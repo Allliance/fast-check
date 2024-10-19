@@ -9,16 +9,17 @@ from transformers import (
     BitsAndBytesConfig,
 )
 
-# LADE parameters
-LADE_LEVEL = 4
-LADE_WINDOW_SIZE=12
-LADE_GUESS_SET_SIZE=3
-LADE_USE_PROMPT_POOL=False
 
 def load_model_and_tokenizer(
         model_name,
         debug,
         use_lade,
+        lade_level=4,
+        lade_window_size=10,
+        lade_guess_set_size=-1,
+        lade_use_prompt_pool=False,
+        lade_debug=False,
+        **kwargs
         ):
 
     print("Loading Model:", model_name, "...")
@@ -58,14 +59,16 @@ def load_model_and_tokenizer(
         os.environ['USE_LADE'] = os.environ['LOAD_LADE'] = str(1)
         
         print("Using Lookahead decoding")
-        
+        print("Lade parameters: LEVEL={}, WINDOW_SIZE={}, GUESS_SET_SIZE={}".format(
+            lade_level, lade_window_size, lade_guess_set_size
+        ))
         lade.augment_all()
         #For a 7B model, set LEVEL=5, WINDOW_SIZE=7, GUESS_SET_SIZE=7
-        lade.config_lade(LEVEL=LADE_LEVEL,
-                         WINDOW_SIZE=LADE_WINDOW_SIZE,
-                         GUESS_SET_SIZE=LADE_GUESS_SET_SIZE,
-                         DEBUG=0,
-                         POOL_FROM_PROMPT=LADE_USE_PROMPT_POOL)
+        lade.config_lade(LEVEL=lade_level,
+                         WINDOW_SIZE=lade_window_size,
+                         GUESS_SET_SIZE=lade_guess_set_size,
+                         DEBUG=lade_debug,
+                         POOL_FROM_PROMPT=lade_use_prompt_pool)
         # model_kwargs['attn_implementation'] = "flash_attention_2"
 
     model = AutoModelForCausalLM.from_pretrained(
@@ -91,6 +94,7 @@ class ChatModel:
         model_name="llama2",
         debug=False,
         use_lade=False,
+        **kwargs
     ):
         self.name = model_name
         self.use_lade = use_lade
@@ -100,6 +104,7 @@ class ChatModel:
             model_name=model_name,
             debug=debug,
             use_lade=use_lade,
+            **kwargs
         )
         
         if debug:
