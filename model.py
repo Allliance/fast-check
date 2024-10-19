@@ -120,7 +120,10 @@ class ChatModel:
             self.conv_template.sep2 = self.conv_template.sep2.strip()
         
 
-    def chat(self, prompts, max_new_tokens=1024, **kwargs):
+    def chat(self,
+             prompts,
+             max_new_tokens=1024,
+             **kwargs):
 
         torch.cuda.empty_cache()
 
@@ -152,6 +155,9 @@ class ChatModel:
                  batch,
                  max_new_tokens=1024,
                  return_ngrams=False,
+                 top_p=0.9,
+                 do_sample=True,
+                 temperature=0.6,
                  **kwargs):
 
         if not isinstance(batch, list):
@@ -175,9 +181,9 @@ class ChatModel:
                 attention_mask=batch_attention_mask, 
                 max_new_tokens=max_new_tokens,
                 return_dict_in_generate=return_ngrams,
-                top_p=0.9,
-                do_sample=True,
-                temperature=0.6,
+                top_p=top_p,
+                do_sample=do_sample,
+                temperature=temperature,
                 **kwargs
             )
             if return_ngrams:
