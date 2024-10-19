@@ -197,7 +197,7 @@ def eval_defense(model,
     else:
         if sum(queryset.labels) > 0:
             metrics['TPR'] = sum([r['is_jailbreak'] for r in results if r['label']]) / sum(queryset.labels)
-            metrics['ASR (TNR)'] = 1 - metrics['TPR']
+            metrics['ASR (FNR)'] = 1 - metrics['TPR']
             
         if sum(queryset.labels) < len(queryset):
             metrics['FPR'] = sum([r['is_jailbreak'] for r in results if not r['label']]) / (len(queryset) - sum(queryset.labels))

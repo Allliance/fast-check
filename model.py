@@ -1,4 +1,5 @@
 import os
+import gc
 import torch
 from fastchat.model import get_conversation_template
 from fastdef.models_config import MODELS_CONFIG
@@ -9,9 +10,10 @@ from transformers import (
 )
 
 # LADE parameters
-LADE_LEVEL = 5
-LADE_WINDOW_SIZE=7
-LADE_GUESS_SET_SIZE=7
+LADE_LEVEL = 4
+LADE_WINDOW_SIZE=12
+LADE_GUESS_SET_SIZE=3
+LADE_USE_PROMPT_POOL=False
 
 def load_model_and_tokenizer(
         model_name,
@@ -55,14 +57,23 @@ def load_model_and_tokenizer(
         from fastdef.libs import lade
         os.environ['USE_LADE'] = os.environ['LOAD_LADE'] = str(1)
         
+        print("Using Lookahead decoding")
+        
         lade.augment_all()
         #For a 7B model, set LEVEL=5, WINDOW_SIZE=7, GUESS_SET_SIZE=7
-        lade.config_lade(LEVEL=LADE_LEVEL, WINDOW_SIZE=LADE_WINDOW_SIZE, GUESS_SET_SIZE=LADE_GUESS_SET_SIZE, DEBUG=0 ,POOL_FROM_PROMPT=True)
+        lade.config_lade(LEVEL=LADE_LEVEL,
+                         WINDOW_SIZE=LADE_WINDOW_SIZE,
+                         GUESS_SET_SIZE=LADE_GUESS_SET_SIZE,
+                         DEBUG=0,
+                         POOL_FROM_PROMPT=LADE_USE_PROMPT_POOL)
         # model_kwargs['attn_implementation'] = "flash_attention_2"
 
     model = AutoModelForCausalLM.from_pretrained(
         **model_kwargs
     )
+    
+    torch.cuda.empty_cache()
+    gc.collect()
     
     if not debug:
         model.half()
@@ -109,7 +120,7 @@ class ChatModel:
             self.conv_template.sep2 = self.conv_template.sep2.strip()
         
 
-    def chat(self, prompts, max_new_tokens=1024):
+    def chat(self, prompts, max_new_tokens=1024, **kwargs):
 
         torch.cuda.empty_cache()
 
@@ -132,7 +143,7 @@ class ChatModel:
             
             self.conv_template.messages = []
 
-        batch_outputs = self.__call__(full_prompts, max_new_tokens)
+        batch_outputs = self.__call__(full_prompts, max_new_tokens, **kwargs)
 
         return batch_outputs
 
@@ -166,11 +177,14 @@ class ChatModel:
                 return_dict_in_generate=return_ngrams,
                 top_p=0.9,
                 do_sample=True,
-                temperature=0.7,
+                temperature=0.6,
                 **kwargs
             )
             if return_ngrams:
-                return outputs
+                assert len(batch_input_ids) == 1, "Only works for single batch"
+                
+                final_response = outputs[0][0][len(batch_input_ids[0]):]
+                return (final_response, outputs[1])
         except RuntimeError as e:
             raise e
             return []
