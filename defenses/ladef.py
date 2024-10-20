@@ -1,7 +1,7 @@
 from .base import BaseDefense
 import numpy as np
 
-KEYWORDS = ["I'm sorry", "Sorry", "sorry", "I am sorry", "I apologize", "As an", "As an AI", "I'm an", "I'm just", "As a language model", "As an Assistant", "I cannot", "I can't", "I do not", "cannot", "is illegal and unethical", "I'm really sorry", "unethical", "not ethical", "illegal", "not legal", "My apologies", "but I cannot", "I'm not able to provide", "I am really sorry", "I cannot create", "I cannot support", "I can't provide", "I can't assist", "I am unable", "I must", "Unfortunately", "unfortunately", "is not capable of", "As a responsible"]
+KEYWORDS = ["I'm sorry", "Sorry", "sorry", "I am sorry", "I apologize", "As an", "As an AI", "I'm an", "I'm just", "As a language model", "As an Assistant", "is illegal and unethical", "I'm really sorry", "unethical", "not ethical", "illegal", "not legal", "My apologies", "I'm not able to provide", "I am really sorry", "I cannot create", "I cannot support", "I can't provide", "I can't assist", "I am unable", "I must", "Unfortunately", "unfortunately", "is not capable of", "As a responsible"]
 
 def check_ngram(ngram, keywords, tk):
     for keyword in keywords:
@@ -28,16 +28,17 @@ class LADefense(BaseDefense):
 
     def _is_jailbreak(self, prompt):
         response, ngrams = self.llm.chat([prompt],
-                        temperature=1.5,
+                        temperature=float(2),
                         top_p=1,
                         max_new_tokens=40,
                         return_ngrams=True)
         
+        print("The obtained response is:", self.llm.tokenizer.decode(response))
         is_malicious = False
         for ngram in ngrams:
             if check_ngram(ngram, self.keywords, self.llm.tokenizer):
                 is_malicious = True
-                # print("Found malicious ngram:\n", self.llm.tokenizer.decode(ngram))
+                print("Found malicious ngram:\n", self.llm.tokenizer.decode(ngram))
                 break
         # print(is_malicious)
         return is_malicious
